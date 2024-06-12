@@ -1,0 +1,8 @@
+.idea
+setting.py
+.env
+chroma
+__pycache__
+credentials.json
+token.pickle
+temp.xlsx
