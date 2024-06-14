@@ -90,12 +90,12 @@ async def dbupdate():
     global linked_col, unlinked_col
     await googledriveutil.save_xlsx_to_drive(setting.file_id, "temp.xlsx")
     await dbutil.db_update()
-    # linked_col = client.get_collection('temp1')
-    # unlinked_col = client.get_collection('temp2')
-    # client.delete_collection(setting.col_names['연동'])
-    # client.delete_collection(setting.col_names['미연동'])
-    # linked_col.modify(setting.col_names['연동'])
-    # unlinked_col.modify(setting.col_names['미연동'])
+    linked_col = client.get_collection('temp1')
+    unlinked_col = client.get_collection('temp2')
+    client.delete_collection(setting.col_names['연동'])
+    client.delete_collection(setting.col_names['미연동'])
+    linked_col.modify(setting.col_names['연동'])
+    unlinked_col.modify(setting.col_names['미연동'])
 
     return "ㅎㅇ"
 
@@ -193,9 +193,18 @@ async def post_ask( INQ_VIEW: Optional[str] = Form(None),
         slackapi.Slack.post_message(setting.slack_channel_id['미연동 알림'], result_str)
     return {"A_CNTS":answer, "CX_YN":CX_YN}
 
+from monitor import monitoring
 
-
+@app.post("/monitor")
+async def monitor(TIME: Optional[int] = Form(None)
+                  ,KEY: Optional[str] = Form(None)
+                  ) :
+    if KEY != setting.key :
+        return "key match error"
+    datas = await monitoring(TIME)
+    datas.reverse()
+    return datas
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8010)
+    uvicorn.run(app, host="0.0.0.0", port=11111)
