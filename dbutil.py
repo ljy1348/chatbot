@@ -28,17 +28,38 @@ def add_collection(name, ids, metadatas, embeddings) :
     else :
         col.add(ids=ids, embeddings=embeddings, metadatas=metadatas)
 
-async def db_update() :
+
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
+from functools import partial
+
+executor = ThreadPoolExecutor(max_workers=4)
+
+
+async def read_excel(sheet_name):
+    loop = asyncio.get_running_loop()
+    # functools.partial을 사용하여 pd.read_excel에 필요한 인자들을 설정합니다.
+    func = partial(pd.read_excel, 'temp.xlsx', sheet_name=sheet_name)
+    # 별도의 스레드에서 Excel 파일을 읽습니다.
+    df = await loop.run_in_executor(executor, func)
+    return df
+
+
+async def db_update():
     df_combined = pd.DataFrame()
     sheet_names = pd.ExcelFile('temp.xlsx').sheet_names
 
-    for sheet_name in sheet_names :
-        if sheet_name in setting.sheet_names :
+    tasks = []
+    for sheet_name in sheet_names:
+        if sheet_name in setting.sheet_names:
             continue
-        else :
-            print(sheet_name)
-            df = pd.read_excel('temp.xlsx', sheet_name=sheet_name)
-            df_combined = pd.concat([df_combined, df], ignore_index=True)
+        task = read_excel(sheet_name)
+        tasks.append(task)
+
+    results = await asyncio.gather(*tasks)
+
+    for df in results:
+        df_combined = pd.concat([df_combined, df], ignore_index=True)
 
     print(len(df_combined))
 

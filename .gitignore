@@ -6,3 +6,6 @@ __pycache__
 credentials.json
 token.pickle
 temp.xlsx
+logs
+sql.py
+streamlit
